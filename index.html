@@ -1,0 +1,132 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>Tovi Demo - A JavaScript image and html slider, with iPhone swipe effect</title>
+	<meta name="Description" content="Tovi is a JavaScript image and html slider(Image Gallery), with iPhone swipe effect, jQuery plugin. Images can be scaled." />
+
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	<script type="text/javascript" src="swipe.js"></script>
+	<script type="text/javascript" src="tovi.js"></script>
+	
+	<style type="text/css">
+	body{
+		color: #aaa;
+		font-size: 14px;
+		font-family: arial;
+		background: #333;
+		text-align: center;
+	}
+	a{
+		color: #ff3;
+	}
+	#player{
+		color: #333;
+		margin: 20px auto;
+		width: 500px;
+		height: 340px;
+		border-top: 0px solid #ccc;
+		border-bottom: 0px solid #ccc;
+		background: #fff;
+	}
+	</style>
+</head>
+<body>
+
+<div id="player" style="display: auto;">
+	<div style="text-align: center; background: #bb8;">
+		<div style="">
+			<h1 style="margin: 0 0 25px 0;">Instruction</h1>
+			<p>Use mouse to drag left or right, or use trackpad to swipe.</p>
+			<p>Use scroll wheel to scale images.</p>
+			<p>Use arrow key to paginate.</p>
+			<p style="margin-top: 00px; font-size: 80%">
+				@ideawu
+				<br/>
+				<a href="http://tovi.udpwork.com/">http://tovi.udpwork.com/</a>
+			</p>
+		</div>
+	</div>
+	<img src="http://images.apple.com/mac/home/images/promo_lead_macbookpro.jpg" />
+	<img src="http://www.ideawu.net/blog/wp-content/themes/ideablog-2.0/logofish.gif" />
+	<img src="http://www.ideawu.net/image/udpwork.com.gif" />
+	<div style="background: #bb8;">
+		<h1 style="margin-top: 0px;">Thanks!</h1>
+	</div>
+</div>
+
+<p id="nav">
+	<a href="javascript: tovi.prev();">&lt;&lt;</a>
+	&nbsp;
+	<span id="page"></span>
+	&nbsp;
+	<a href="javascript: tovi.next();">&gt;&gt;</a>
+</p>
+
+<div>
+	<textarea style="width:380px;height:100px" name="text">http://images.apple.com/iphone/design/images/hero_front.jpg</textarea>
+	<p>
+	<button id="add">Insert HTML or image Link into slider</button>
+	</p>
+</div>
+
+
+<script type="text/javascript">
+var tovi;
+$(function(){
+	$('#nav').children().each(function(i, e){
+		//alert(e.outerHTML);
+	});
+	$(document).ready(function(){
+		$('*').on('selectstart', function(e){e.preventDefault();});
+
+		tovi = new ToviViewer();
+		tovi.onchange = function(index, cell){
+			//alert(index);
+			$('#page').html((index + 1) + '/' + tovi.cells.length);
+		}
+		tovi.init($('#player'));
+		
+		$('#add').click(function(){
+			var str = $('textarea[name=text]').val();
+			if(str.match(/^https?:\/\//)){
+				str = '<img src="' + str + '" />';
+			}else{
+				str = '<div>' + str + '</div>';
+			}
+			tovi.insert(0, str);
+			tovi.seek(-1);
+		});
+	});
+	$(document).bind('keydown', keyboard_handler);
+});
+
+function keyboard_handler(e){
+	switch(String.fromCharCode(e.which)){
+		//case 'A':
+		case '%': // left
+			tovi.prev();
+			e.preventDefault();
+			break;
+		//case 'D':
+		case '\'': // right
+			tovi.next();
+			e.preventDefault();
+			break;
+		//case 'W':
+		case '&': //up
+			tovi.scale(0.08);
+			e.preventDefault();
+			break;
+		//case 'S':
+		case '(': //down
+			tovi.scale(-0.08);
+			e.preventDefault();
+			break;
+	}
+}
+</script>
+
+
+</body>
+</html>
