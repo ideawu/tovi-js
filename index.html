@@ -2,8 +2,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<title>Tovi Demo - A JavaScript image and html slider, with iPhone swipe effect</title>
-	<meta name="Description" content="Tovi is a JavaScript image and html slider(Image Gallery), with iPhone swipe effect, jQuery plugin. Images can be scaled." />
+	<title>Tovi - The JavaScript image gallery and html slider, with iPhone swipe effect</title>
+	<meta name="Description" content="Tovi is a JavaScript image gallery and html slider, with iPhone swipe effect, jQuery plugin. Images can be scaled." />
 
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 	<script type="text/javascript" src="swipe.js"></script>
@@ -22,7 +22,7 @@
 	}
 	#player{
 		color: #333;
-		margin: 20px auto;
+		margin: 20px auto 0 auto;
 		width: 500px;
 		height: 340px;
 		border-top: 0px solid #ccc;
@@ -34,6 +34,13 @@
 		-moz-user-select: none;
 		-ms-user-select: none;
 		user-select: none;
+	}
+	#nav{
+		margin: 10px 0;
+	}
+	#nav p{
+		margin: 8px 0;
+		padding: 0;
 	}
 	</style>
 </head>
@@ -61,13 +68,14 @@
 	</div>
 </div>
 
-<p id="nav">
+<div id="nav">
 	<a href="javascript: tovi.prev();">&lt;&lt;</a>
 	&nbsp;
 	<span id="page"></span>
 	&nbsp;
 	<a href="javascript: tovi.next();">&gt;&gt;</a>
-</p>
+	<p><label><input type="checkbox" name="autoplay" checked="checked" />Auto Play</label></p>
+</div>
 
 <div>
 	<textarea style="width:380px;height:100px" name="text">http://images.apple.com/iphone/design/images/hero_front.jpg</textarea>
@@ -92,6 +100,7 @@ $(function(){
 			$('#page').html((index + 1) + '/' + tovi.cells.length);
 		}
 		tovi.init($('#player'));
+		tovi.autoplay();
 		
 		$('#add').click(function(){
 			var str = $('textarea[name=text]').val();
@@ -102,6 +111,14 @@ $(function(){
 			}
 			tovi.insert(0, str);
 			tovi.seek(-1);
+		});
+		
+		$('input[name=autoplay]').change(function(){
+			if(this.checked){
+				tovi.autoplay();
+			}else{
+				tovi.stopAutoplay();
+			}
 		});
 	});
 	$(document).bind('keydown', keyboard_handler);
