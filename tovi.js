@@ -510,6 +510,7 @@ function ToviViewer(){
 		self.cells = [];
 		self.index = 0;
 		$(dom).find('.tovi_row').html('');
+		self.onchange(-1, null);
 	}
 	
 	self.add = function(e){
@@ -620,6 +621,7 @@ function ToviViewer(){
 				width: cell.width,
 				height: cell.height
 			});
+			self.onchange(self.index, self.cells[self.index]);
 		}
 		init_nav_button();
 		init_swipe();
