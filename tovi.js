@@ -251,6 +251,9 @@ function ToviViewer(){
 			cell.marginLeft = cell.midx - cell.width/2 + cell.paddingLeft;
 			cell.paddingTop = 0;
 			cell.paddingLeft = 0;
+		}else{
+					cell.marginTop = 0;
+					cell.marginLeft = 0;
 		}
 		self.layout();
 		self.onscale(self.index, cell);
