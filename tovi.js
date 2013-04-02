@@ -183,18 +183,23 @@ function ToviViewer(){
 		if(last_pos.x == 0){
 			last_pos.x = x;
 		}
-		cell.marginLeft += (x - last_pos.x);
-		last_pos.x = x;
-		
 		// vertical drag
 		var y = e.pageY;
 		if(last_pos.y == 0){
 			last_pos.y = y;
 		}
-		cell.marginTop += (y - last_pos.y);
-		last_pos.y = y;
-
-		self.layout();
+		
+		if(!cell.overflow()){
+			self.slide(x - last_pos.x);
+			last_pos.x = x;
+		}else{
+			cell.marginLeft += (x - last_pos.x);
+			last_pos.x = x;
+		
+			cell.marginTop += (y - last_pos.y);
+			last_pos.y = y;
+			self.layout();
+		}
 	}
 	
 	self.slide = function(delta){
