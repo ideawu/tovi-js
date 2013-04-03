@@ -8,7 +8,7 @@
 <script type="text/javascript" src="http://tovi.ideawu.com/tovi.js"></script>
 
 <div id="player" style="margin: 10px auto; width: 400px; height: 300px; border: 1px solid #ccc;">
-  <img src="http://images.apple.com/mac/home/images/promo_lead_macbookpro.jpg" />
+	<img src="http://images.apple.com/mac/home/images/promo_lead_macbookpro.jpg" />
 	<div style="background: #bb8;">
 		<h1>Thanks!</h1>
 	</div>
