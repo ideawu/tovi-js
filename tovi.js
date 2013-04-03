@@ -42,7 +42,7 @@ function ToviViewer(){
 		this.midx = 0;
 		this.midy = 0;
 		this.overflow = function(){
-			if(this.is_image()){
+			if(this.is_image() || this.type == 'video'){
 				return (this.width > self.width || this.height > self.height);
 			}else{
 				return (this.width > self.width || this.height > self.height);
@@ -50,7 +50,7 @@ function ToviViewer(){
 			}
 		}
 		this.scaled = function(){
-			if(this.is_image()){
+			if(this.is_image() || this.type == 'video'){
 				return (this.width > this.origin_width || this.height > this.origin_height);
 			}else{
 				return false;
@@ -73,6 +73,28 @@ function ToviViewer(){
 			this.width = Math.min(self.width, this.origin_width);
 			this.height = Math.min(self.height, this.origin_height);
 		}
+		this.centerX = function(){
+			this.marginLeft = intval((self.width - this.width)/2);
+		}
+		this.centerY = function(){
+			this.marginTop = intval((self.height - this.height)/2);
+		}
+		this.center = function(){
+			this.centerX();
+			this.centerY();
+		}
+		this.isCenterX = function(){
+			var r = Math.abs(this.marginLeft / ((self.width - this.width)/2));
+			// %15 of width or 10 pixels
+			return Math.abs(1-r) < 0.15 || Math.abs(self.width - this.width) < 10;
+		}
+		this.isCenterY = function(){
+			var r = Math.abs(this.marginTop / ((self.height - this.height)/2));
+			return Math.abs(1-r) < 0.15 || Math.abs(self.height - this.height) < 10;
+		}
+		this.isCenter = function(){
+			return this.isCenterX() && this.isCenterY();
+		}
 		this.bestsize = function(){
 			var w = this.origin_width;
 			var h = this.origin_height;
@@ -81,15 +103,13 @@ function ToviViewer(){
 			}
 			if(self.width/self.height > w/h){
 				var nh = Math.min(self.height, h);
-				var nw = parseInt(w * nh/h);
+				var nw = intval(w * nh/h);
 			}else{
 				var nw = Math.min(self.width, w);
-				var nh = parseInt(h * nw/w);
+				var nh = intval(h * nw/w);
 			}
 			this.width = nw;
 			this.height = nh;
-			this.marginTop = 0;
-			this.marginLeft = 0;
 		}
 		this.fillsize = function(){
 			var w = this.width;
@@ -106,8 +126,6 @@ function ToviViewer(){
 			}
 			this.width = nw;
 			this.height = nh;
-			this.marginTop = 0;
-			this.marginLeft = 0;
 		}
 	}
 	
@@ -180,31 +198,6 @@ function ToviViewer(){
 	self.prev = function(){
 		self.seek(self.index - 1);
 	}
-
-	function move(e){
-		var cell = self.cells[self.index];
-		var x = e.pageX;
-		if(last_pos.x == 0){
-			last_pos.x = x;
-		}
-		// vertical drag
-		var y = e.pageY;
-		if(last_pos.y == 0){
-			last_pos.y = y;
-		}
-		
-		if(!cell.overflow()){
-			self.slide(x - last_pos.x);
-			last_pos.x = x;
-		}else{
-			cell.marginLeft += (x - last_pos.x);
-			last_pos.x = x;
-		
-			cell.marginTop += (y - last_pos.y);
-			last_pos.y = y;
-			self.layout();
-		}
-	}
 	
 	self.slide = function(delta){
 		var margin = intval($(dom).find('.tovi_row').css('marginLeft'));
@@ -240,24 +233,19 @@ function ToviViewer(){
 	self.scale = function(delta){
 		var cell = self.cells[self.index];
 		// only allow to scale images
-		if(!cell.is_image()){
+		if(!cell.is_image() && cell.type != 'video'){
 			return;
 		}
 		cell.midx = cell.width/2 + cell.marginLeft;
 		cell.midy = cell.height/2 + cell.marginTop;
 
-		var dx = parseInt(self.width * delta);
-		cell.width += dx;
-		cell.width = Math.max(cell.width, 20);
-		cell.height = parseInt((cell.width/cell.origin_width) * cell.origin_height);
+		cell.width = Math.max(20, intval(cell.width * (delta + 1)));
+		cell.height = intval((cell.width/cell.origin_width) * cell.origin_height);
 		if(cell.overflow()){
 			cell.marginTop = cell.midy - cell.height/2 + cell.paddingTop;
 			cell.marginLeft = cell.midx - cell.width/2 + cell.paddingLeft;
-			cell.paddingTop = 0;
-			cell.paddingLeft = 0;
 		}else{
-			cell.marginTop = 0;
-			cell.marginLeft = 0;
+			cell.center();
 		}
 		self.layout();
 		self.onscale(self.index, cell);
@@ -266,49 +254,97 @@ function ToviViewer(){
 	self.resize = function(width, height){
 		width = intval(width);
 		height = intval(height);
+		var dx = width - self.width;
+		var dy = height - self.height;
 		var rate_w = width/self.width;
 		var rate_h = height/self.height;
-		var old_overflow = [];
+		var old = [];
 		for(var i=0; i<self.cells.length; i++){
 			var cell = self.cells[i];
-			old_overflow[i] = cell.overflow();
+			old[i] = {
+				scaled: cell.scaled(),
+				overflow: cell.overflow(),
+				isCenterX: cell.isCenterX(),
+				isCenterY: cell.isCenterY()
+			};
 		}
+		var old_width = self.width;
+		var old_height = self.height;
 		self.width = width;
 		self.height = height;
-		//self.layout();
 		
-		var rate = Math.max(rate_w, rate_h);
+		var max = Math.max(rate_w, rate_h);
+		var min = Math.min(rate_w, rate_h);
 		for(var i=0; i<self.cells.length; i++){
 			var cell = self.cells[i];
-			if(cell.is_image()){
-				if(rate > 1){
-					cell.marginTop = intval(cell.marginTop / rate_h);
-					cell.marginLeft = intval(cell.marginLeft / rate_w);
-					if(cell.overflow()){
-						//
-					}else{
-						if(cell.scaled()){
-							cell.fillsize();
-						}else{
-							cell.bestsize();
+			if(cell.is_image() || cell.type == 'video'){
+				var a0 = cell.height < old_height;
+				var b0 = cell.width < old_width;
+				var a1 = cell.height < self.height;
+				var b1 = cell.width < self.width;
+				//debug(a0, a1, b0, b1);
+				if(a0 != a1 || b0 != b1){
+					if((dy > 0 || dy < 0 && cell.overflow())){
+						//cell.height += dy;
+						cell.height = Math.max(20, cell.height + dy);
+						if(cell.height < 0) alert(1);
+						if(Math.abs(cell.height - self.height) < 50){
+							cell.height = self.height;
 						}
-					}
-				}else{
-					rate = Math.min(rate_w, rate_h);
-					if(old_overflow[i]){
-						if(cell.marginTop > 0){
-							cell.marginTop = intval(cell.marginTop * rate_h);
+						cell.width = intval((cell.height/cell.origin_height) * cell.origin_width);
+						if(cell.width > self.width){
+							cell.width = self.width;
+							cell.height = intval((cell.width/cell.origin_width) * cell.origin_height);
 						}
-						if(cell.marginLeft > 0){
-							cell.marginLeft = intval(cell.marginLeft * rate_w);
+					}else if(dx > 0 || dx < 0 && cell.overflow()){
+						//cell.width += dx;
+						cell.width = Math.max(20, cell.width + dx);
+						if(Math.abs(cell.width - self.width) < 50){
+							cell.width = self.width;
 						}
-					}else{
-						if(cell.overflow()){
-							cell.fillsize();
+						cell.height = intval((cell.width/cell.origin_width) * cell.origin_height);
+						if(cell.height > self.height){
+							cell.height = self.height;
+							cell.width = intval((cell.height/cell.origin_height) * cell.origin_width);
 						}
 					}
 				}
-				cell.content.find('>img').css({
+				
+				if(dx > 0){
+					if(cell.marginLeft < self.width - (cell.marginLeft + cell.width)){
+						cell.marginLeft += dx;
+					}else{
+						//
+					}
+				}else{
+					if(cell.marginLeft < self.width - (cell.marginLeft + cell.width)){
+						//
+					}else{
+						cell.marginLeft += dx;
+					}
+				}
+				if(dy > 0){
+					if(cell.marginTop < self.height - (cell.marginTop + cell.height)){
+						cell.marginTop += dy;
+					}else{
+						//
+					}
+				}else{
+					if(cell.marginTop < self.height - (cell.marginTop + cell.height)){
+						//
+					}else{
+						cell.marginTop += dy;
+					}
+				}
+				
+				if(old[i].isCenterX){
+					cell.centerX();
+				}
+				if(old[i].isCenterY){
+					cell.centerY();
+				}
+				
+				cell.content.children().css({
 					width: cell.width,
 					height: cell.height
 				});
@@ -327,15 +363,15 @@ function ToviViewer(){
 			var m = (self.cell_padding * self.index * 2) + self.width * self.index + self.cell_padding;
 			$(dom).find('.tovi_row').css('marginLeft', -m);
 		}
-		$(dom).find('.tovi_block').css({
+		$(dom).find('.tovi_cell').css({
 			width: self.width,
 			height: self.height,
 			borderColor: self.cell_padding_color,
 			borderStyle: 'solid',
-			borderTopWidth: 0,
+			borderWidth: 0,
 			borderBottomWidth: 0,
-			borderLeftWidth: self.cell_padding + 'px',
-			borderRightWidth: self.cell_padding + 'px'
+			borderLeftWidth: self.cell_padding,
+			borderRightWidth: self.cell_padding
 		});
 		
 		for(var i=0; i<self.cells.length; i++){
@@ -343,9 +379,7 @@ function ToviViewer(){
 				continue;
 			}
 			var cell = self.cells[i];
-			if(cell.is_image()){
-				var w = cell.width;
-				var h = cell.height;
+			if(cell.is_image() || cell.type == 'video'){
 				if(cell.overflow()){
 					cell.content.css({
 						cursor: 'move'
@@ -354,16 +388,12 @@ function ToviViewer(){
 					cell.content.css({
 						cursor: 'auto'
 					});
-					cell.paddingTop = parseInt((self.height - cell.height)/2);
-					cell.paddingLeft = parseInt((self.width - cell.width)/2);
-					w = self.width - 2*cell.paddingLeft;
-					h = self.height - 2*cell.paddingTop;
 				}
 				cell.content.css({
-					width: w - 2*intval(cell.content.css('borderLeftWidth')),
-					height: h - 2*intval(cell.content.css('borderTopWidth')),
-					margin: cell.marginTop + 'px ' + cell.marginLeft + 'px',
-					padding: cell.paddingTop + 'px ' + cell.paddingLeft + 'px'
+					width: cell.width,
+					height: cell.height,
+					marginTop: cell.marginTop,
+					marginLeft: cell.marginLeft
 				});
 			}else{
 				var child = cell.content.children();
@@ -461,14 +491,38 @@ function ToviViewer(){
 			}
 		});
 	}
-	
+
+	function move(e){
+		var cell = self.cells[self.index];
+		var x = e.pageX;
+		if(last_pos.x == 0){
+			last_pos.x = x;
+		}
+		// vertical drag
+		var y = e.pageY;
+		if(last_pos.y == 0){
+			last_pos.y = y;
+		}
+		
+		if(!cell.overflow()){
+			self.slide(x - last_pos.x);
+			last_pos.x = x;
+		}else{
+			cell.marginLeft += (x - last_pos.x);
+			last_pos.x = x;
+		
+			cell.marginTop += (y - last_pos.y);
+			last_pos.y = y;
+			self.layout();
+		}
+	}
+
 	function init_drag(cell){
 		$(dom).on('dragstart', function(e){e.preventDefault();});
-		cell.content.bind('mousedown', function(e){
+		cell.dom.bind('mousedown', function(e){
 			$(dom).bind('mousemove', move);
 			$(dom).bind('mouseup mouseout', function(e){
 				var offset = $(dom).offset();
-				//$('.debug').html([e.type, e.pageX, e.pageY, offset.left, offset.top].join(' ')+'#<br>');
 				if(e.type == 'mouseout'){
 					if(e.pageX > offset.left && e.pageX < offset.left + $(dom).width()
 						&& e.pageY > offset.top && e.pageY < offset.top + $(dom).height()){
@@ -518,13 +572,12 @@ function ToviViewer(){
 	
 	self.insert = function(index, e){
 		index = Math.min(self.cells.length, Math.max(0, index));
-		e = $(e)[0];
 		var cell = new Cell(self.width, self.height);
-		var str = '<div class="tovi_block"><div class="tovi_cell"></div></div>';
+		var str = '<div class="tovi_cell"></div>';
 		cell.dom = $(str);
-		cell.content = cell.dom.children();
-		cell.type = e.tagName.toLowerCase();
-		cell.content.html(e);
+		cell.content = $(e);
+		cell.type = cell.content[0].tagName.toLowerCase();
+		cell.dom.html(cell.content);
 		self.cells.splice(index, 0, cell);
 		
 		$(cell.dom).css({
@@ -533,26 +586,19 @@ function ToviViewer(){
 			margin: 0,
 			padding: 0
 		});
-		$(cell.content).css({
-			overflow: 'hidden',
+		cell.content.css({
 			float: 'left',
 			margin: 0,
 			padding: 0,
-			border: self.cell_border
-		});
-		$(cell.content).children().css({
-			float: 'left',
 			border: 0
 		});
 		if(index == 0){
 			$(dom).find('.tovi_row').prepend(cell.dom);
 		}else{
-			$($(dom).find('.tovi_block')[index-1]).after(cell.dom);
+			$($(dom).find('.tovi_cell')[index-1]).after(cell.dom);
 		}
 		
-		if(!cell.is_image()){
-			cell.autosize();
-		}else{
+		if(cell.is_image()){
 			var url = $(e).attr('src');
 			$(e).hide();
 			cell.url = url;
@@ -563,14 +609,40 @@ function ToviViewer(){
 				var cell = self.cells[this.index_];
 				cell.origin_width = this.width;
 				cell.origin_height = this.height;
+				cell.width = this.width;
+				cell.height = this.height;
 				cell.bestsize();
-				cell.content.find('>img').css({
+				cell.center();
+				cell.content.css({
 					width: cell.width,
 					height: cell.height
 				}).fadeIn('fast');
-				self.layout();
+				self.layout(this.index_);
 			}
 			ni.src = url;
+		}else if(cell.type == 'video'){
+			var url = $(e).attr('src');
+			if(!url || url.length == 0){
+				url = $(e).children('source')[0].src;
+			}
+			$(e).attr('tovi_index', index);
+		    $(e).bind("loadedmetadata", function(e){
+				var index = intval($(this).attr('tovi_index'));
+				var cell = self.cells[index];
+				cell.origin_width = this.videoWidth;
+				cell.origin_height = this.videoHeight;
+				cell.width = this.videoWidth;
+				cell.height = this.videoHeight;
+				cell.bestsize();
+				cell.content.children().css({
+					border: '1px solid #fff',
+					width: cell.width,
+					height: cell.height
+				}).fadeIn('fast');
+				self.layout(index);
+		    });
+		}else{
+			cell.autosize();
 		}
 		init_drag(cell);
 		if(index == self.index){
