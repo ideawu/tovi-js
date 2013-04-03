@@ -424,6 +424,7 @@ function ToviViewer(){
 			'font-family': 'arial',
 			'font-size': w,
 			'border-radius': 8,
+			'text-align': 'center',
 			border: '1px solid #999',
 			width: w,
 			lineHeight: w + 'px',
@@ -447,12 +448,12 @@ function ToviViewer(){
 				$(dom).find('.tovi_prev,.tovi_next').fadeOut();
 			}else{
 				$(dom).find('.tovi_prev').css({
-					top: $(dom).offset().top + t,
-					left: $(dom).offset().left + l
+					top: t,
+					left: l
 				}).fadeIn('normal');
 				$(dom).find('.tovi_next').css({
-					top: $(dom).offset().top + t,
-					right: $(dom).offset().left + l
+					top: t,
+					right: l
 				}).fadeIn('normal');
 			}
 		});
@@ -592,7 +593,7 @@ function ToviViewer(){
 		self.cells = [];
 		
 		var html = '';
-		html += '<div class="tovi">';
+		html += '<div class="tovi" style="position: relative">';
 		html += '<div class="tovi_row"></div>';
 		html += '<div class="tovi_prev" style="display: none;">&lt;</div>';
 		html += '<div class="tovi_next" style="display: none;">&gt;</div>';
@@ -606,9 +607,7 @@ function ToviViewer(){
 		}).show();
 		$(dom).find('.tovi_row').css({
 			position: 'relative',
-			marginLeft: -self.cell_padding,
-			top: 0,
-			left: 0
+			marginLeft: -self.cell_padding
 		});
 		
 		self.onscale = function(index, cell){
