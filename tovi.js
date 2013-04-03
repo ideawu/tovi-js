@@ -256,8 +256,8 @@ function ToviViewer(){
 			cell.paddingTop = 0;
 			cell.paddingLeft = 0;
 		}else{
-					cell.marginTop = 0;
-					cell.marginLeft = 0;
+			cell.marginTop = 0;
+			cell.marginLeft = 0;
 		}
 		self.layout();
 		self.onscale(self.index, cell);
@@ -344,15 +344,18 @@ function ToviViewer(){
 			}
 			var cell = self.cells[i];
 			if(cell.is_image()){
-				if(!cell.overflow()){
-					//cell.marginTop = 0;
-					//cell.marginLeft = 0;
-					cell.paddingTop = parseInt((self.height - cell.height)/2);
-					cell.paddingLeft = parseInt((self.width - cell.width)/2);
-				}
 				var w = cell.width;
 				var h = cell.height;
-				if(!cell.overflow()){
+				if(cell.overflow()){
+					cell.content.css({
+						cursor: 'move'
+					});
+				}else{
+					cell.content.css({
+						cursor: 'auto'
+					});
+					cell.paddingTop = parseInt((self.height - cell.height)/2);
+					cell.paddingLeft = parseInt((self.width - cell.width)/2);
 					w = self.width - 2*cell.paddingLeft;
 					h = self.height - 2*cell.paddingTop;
 				}
