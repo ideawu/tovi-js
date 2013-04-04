@@ -95,21 +95,62 @@ function ToviViewer(){
 		this.isCenter = function(){
 			return this.isCenterX() && this.isCenterY();
 		}
+		this.autocenter = function(){
+			var r = Math.abs(this.marginLeft / ((self.width - this.width)/2));
+			if(this.isCenterX()){
+				this.centerX();
+			}
+			if(this.isCenterY()){
+				this.centerY();
+			}
+		}
+		this.scale = function(rate){
+			if(Math.abs(this.width * rate - this.width) < 1){
+				//return;
+			}
+			var a = this.height;
+			this.width = this.width * rate;
+			this.height = this.origin_height * this.width/this.origin_width;
+			if(rate > 1){
+				this.width = Math.ceil(this.width);
+				this.height = Math.ceil(this.height);
+			}else{
+				this.width = Math.floor(this.width);
+				this.height = Math.floor(this.height);
+			}
+			//if(a == this.height){
+			//	alert(' ' + a + ' ' + this.height + ' ' + rate);
+				//}
+		}
+		this.autodock = function(){
+			if(self.width > this.width && self.width - this.width < 50 && this.height < self.height - 50){
+				this.scale(self.width/this.width);
+				this.width = self.width;
+			}else if(self.height > this.height && self.height - this.height < 50 && this.width < self.width - 50){
+				this.scale(self.height/this.height);
+				this.height = self.height;
+			}else{
+				return;
+			}
+			this.center();
+			this.width = Math.min(self.width, this.width);
+			this.height =  Math.min(self.height, this.height);
+		}
 		this.bestsize = function(){
 			var w = this.origin_width;
 			var h = this.origin_height;
 			if(w == 0 || h == 0){
 				return;
 			}
-			if(self.width/self.height > w/h){
+			if(self.width/self.height > this.origin_width/this.origin_height){
 				var nh = Math.min(self.height, h);
-				var nw = intval(w * nh/h);
+				var nw = intval(this.origin_width * nh/this.origin_height);
 			}else{
 				var nw = Math.min(self.width, w);
-				var nh = intval(h * nw/w);
+				var nh = intval(this.origin_height * nw/this.origin_width);
 			}
-			this.width = nw;
-			this.height = nh;
+			this.width = Math.min(self.width, nw);
+			this.height =  Math.min(self.height, nh);
 		}
 		this.fillsize = function(){
 			var w = this.width;
@@ -117,15 +158,15 @@ function ToviViewer(){
 			if(w == 0 || h == 0){
 				return;
 			}
-			if(self.width/self.height > w/h){
-				var nh = Math.min(self.height, h);
-				var nw = parseInt(w * nh/h);
+			if(self.width/self.height > this.origin_width/this.origin_height){
+				var nh = self.height;
+				var nw = intval(this.origin_width * nh/this.origin_height);
 			}else{
-				var nw = Math.min(self.width, w);
-				var nh = parseInt(h * nw/w);
+				var nw = self.width;
+				var nh = intval(this.origin_height * nw/this.origin_width);
 			}
-			this.width = nw;
-			this.height = nh;
+			this.width = Math.min(self.width, nw);
+			this.height =  Math.min(self.height, nh);
 		}
 	}
 	
@@ -278,40 +319,11 @@ function ToviViewer(){
 		for(var i=0; i<self.cells.length; i++){
 			var cell = self.cells[i];
 			if(cell.is_image() || cell.type == 'video'){
-				var a0 = cell.height < old_height;
-				var b0 = cell.width < old_width;
-				var a1 = cell.height < self.height;
-				var b1 = cell.width < self.width;
-				//debug(a0, a1, b0, b1);
-				if(a0 != a1 || b0 != b1){
-					if((dy > 0 || dy < 0 && cell.overflow())){
-						//cell.height += dy;
-						cell.height = Math.max(20, cell.height + dy);
-						if(cell.height < 0) alert(1);
-						if(Math.abs(cell.height - self.height) < 50){
-							cell.height = self.height;
-						}
-						cell.width = intval((cell.height/cell.origin_height) * cell.origin_width);
-						if(cell.width > self.width){
-							cell.width = self.width;
-							cell.height = intval((cell.width/cell.origin_width) * cell.origin_height);
-						}
-					}else if(dx > 0 || dx < 0 && cell.overflow()){
-						//cell.width += dx;
-						cell.width = Math.max(20, cell.width + dx);
-						if(Math.abs(cell.width - self.width) < 50){
-							cell.width = self.width;
-						}
-						cell.height = intval((cell.width/cell.origin_width) * cell.origin_height);
-						if(cell.height > self.height){
-							cell.height = self.height;
-							cell.width = intval((cell.height/cell.origin_height) * cell.origin_width);
-						}
-					}
-				}
-				
+				var ow = cell.width;
+				var oh = cell.height;
 				if(dx > 0){
 					if(cell.marginLeft < self.width - (cell.marginLeft + cell.width)){
+					//if(cell.marginLeft + cell.width < self.width){
 						cell.marginLeft += dx;
 					}else{
 						//
@@ -336,12 +348,66 @@ function ToviViewer(){
 						cell.marginTop += dy;
 					}
 				}
-				
-				if(old[i].isCenterX){
-					cell.centerX();
+
+				if(!cell.scaled() &&
+					(cell.height == old_height && cell.width <= old_width ||
+						cell.width == old_width && cell.height <= old_height
+					)
+				){
+					if(self.width >= cell.origin_width && self.height >= cell.origin_height){
+						cell.fillsize();
+						cell.autodock();
+						if(cell.scaled()){
+							cell.bestsize();
+						}
+					}
+				}else if(cell.scaled() &&
+					(cell.height == old_height && cell.width <= old_width ||
+						cell.width == old_width && cell.height <= old_height
+					)
+				){
+					cell.fillsize();
+				}else if(cell.width < old_width && cell.height < old_height && cell.overflow()){
+					cell.fillsize();
+				}else{
+					var a = self.width > cell.width && dy > 0;
+					var b = dy < 0 && (cell.marginTop + cell.height) > self.height;
+					var c = self.height > cell.height && dx > 0;
+					var d = dx < 0 && (cell.marginLeft + cell.width) > self.width;
+					if(cell.width != cell.origin_width && cell.overflow()){
+						if(a || b){
+							var ow = cell.width;
+							cell.scale(rate_h);
+							cell.marginLeft -= intval((cell.width - ow)/2);
+						}
+						if(c || d){
+							cell.scale(rate_w);
+						}
+						if((!a && !b && !c && !d) && !cell.overflow()){
+							if(dy != 0){
+								var ow = cell.width;
+								cell.scale(rate_h);
+								cell.marginLeft -= intval((cell.width - ow)/2);
+							}
+							if(dx != 0){
+								cell.scale(rate_w);
+							}
+						}
+						if(!old[i].overflow && cell.overflow()){
+							//cell.fillsize();
+						}
+						if(!cell.overflow()){
+							cell.center();
+						}
+					}
 				}
-				if(old[i].isCenterY){
-					cell.centerY();
+				
+				cell.autocenter();
+				cell.autodock();
+				if(!old[i].scaled && cell.scaled()){
+					cell.width = cell.origin_width;
+					cell.height = cell.origin_height;
+					cell.center();
 				}
 				
 				cell.content.children().css({
