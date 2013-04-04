@@ -778,7 +778,8 @@ function ToviViewer(){
 			self.autoplay_timer = setInterval(function(){
 				if(self.index < 0 || self.index >= self.cells.length-1){
 					self.seek(0, 0);
-					self.seek(-1);
+					self.slide(self.cell_padding);
+					self.seek(0);
 				}else{
 					self.seek(self.index + 1);
 				}
