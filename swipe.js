@@ -41,7 +41,7 @@ var Swipe = function(jqobj){
 				s.onend(s.event);
 				s.event = {dx:0, dy:0};
 			}
-		}, 200);
+		}, 150);
 	}
 	// be called on mousewheel event
 	s.trigger = function(e){
