@@ -26,10 +26,12 @@ var Swipe = function(jqobj){
 
 	s.status = null;
 	s.event = {dx:0, dy:0};
-	s.onswipe = null;
-	s.onstart = null;
-	s.onend = null;
 	s.timer = null;
+
+	s.onstart = null;
+	s.onswipe = null;
+	s.onend = null;
+
 	function settimer(){
 		if(s.timer != null){
 			clearTimeout(s.timer);
@@ -51,6 +53,10 @@ var Swipe = function(jqobj){
 		e.pageY = oe.pageY;
 		e.dx = oe.wheelDeltaX || 0;
 		e.dy = oe.wheelDeltaY || oe.wheelDelta || -oe.detail * 40;
+		if(e.dx != 0){ // trackpad
+			e.dx *= 3;
+			e.dy *= 3;
+		}
 		s.event = e;
 		if(s.status == null){
 			s.status = 'start';

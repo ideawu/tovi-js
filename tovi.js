@@ -27,6 +27,7 @@ function ToviViewer(){
 	}
 	
 	function Cell(width, height){
+		this.sizing = 'best'; // best, fill
 		this.type = null;
 		this.dom = null;
 		this.url = '';
@@ -119,23 +120,20 @@ function ToviViewer(){
 				this.width = Math.floor(this.width);
 				this.height = Math.floor(this.height);
 			}
-			//if(a == this.height){
-			//	alert(' ' + a + ' ' + this.height + ' ' + rate);
-				//}
 		}
 		this.autodock = function(){
-			if(self.width > this.width && self.width - this.width < 50 && this.height < self.height - 50){
-				this.scale(self.width/this.width);
-				this.width = self.width;
-			}else if(self.height > this.height && self.height - this.height < 50 && this.width < self.width - 50){
-				this.scale(self.height/this.height);
-				this.height = self.height;
-			}else{
-				return;
+			var thresh = 8;
+			if(Math.abs(self.width - this.width) < thresh){
+				var nw = self.width;
+				var nh = intval(this.origin_height * nw/this.origin_width);
+				this.width = nw;
+				this.height =  nh;
+			}else if(Math.abs(self.height - this.height) < thresh){
+				var nh = self.height;
+				var nw = intval(this.origin_width * nh/this.origin_height);
+				this.width = nw;
+				this.height =  nh;
 			}
-			this.center();
-			this.width = Math.min(self.width, this.width);
-			this.height =  Math.min(self.height, this.height);
 		}
 		this.bestsize = function(){
 			var w = this.origin_width;
@@ -252,11 +250,10 @@ function ToviViewer(){
 
 		cell.width = Math.max(20, intval(cell.width * (delta + 1)));
 		cell.height = intval((cell.width/cell.origin_width) * cell.origin_height);
+		cell.autodock();
 		if(cell.overflow()){
 			cell.marginTop = cell.midy - cell.height/2 + cell.paddingTop;
 			cell.marginLeft = cell.midx - cell.width/2 + cell.paddingLeft;
-		}else{
-			cell.center();
 		}
 		self.layout();
 		self.onscale(self.index, cell);
@@ -267,16 +264,12 @@ function ToviViewer(){
 		height = intval(height);
 		var dx = width - self.width;
 		var dy = height - self.height;
-		var rate_w = width/self.width;
-		var rate_h = height/self.height;
 		var old = [];
 		for(var i=0; i<self.cells.length; i++){
 			var cell = self.cells[i];
 			old[i] = {
 				scaled: cell.scaled(),
-				overflow: cell.overflow(),
-				isCenterX: cell.isCenterX(),
-				isCenterY: cell.isCenterY()
+				overflow: cell.overflow()
 			};
 		}
 		var old_width = self.width;
@@ -284,16 +277,11 @@ function ToviViewer(){
 		self.width = width;
 		self.height = height;
 		
-		var max = Math.max(rate_w, rate_h);
-		var min = Math.min(rate_w, rate_h);
 		for(var i=0; i<self.cells.length; i++){
 			var cell = self.cells[i];
 			if(cell.is_image() || cell.type == 'video'){
-				var ow = cell.width;
-				var oh = cell.height;
 				if(dx > 0){
 					if(cell.marginLeft < self.width - (cell.marginLeft + cell.width)){
-					//if(cell.marginLeft + cell.width < self.width){
 						cell.marginLeft += dx;
 					}else{
 						//
@@ -318,69 +306,25 @@ function ToviViewer(){
 						cell.marginTop += dy;
 					}
 				}
-
-				if(!cell.scaled() &&
-					(cell.height == old_height && cell.width <= old_width ||
+								
+				// 1. scale
+				if(cell.height == old_height && cell.width <= old_width ||
 						cell.width == old_width && cell.height <= old_height
-					)
-				){
-					if(self.width >= cell.origin_width && self.height >= cell.origin_height){
-						cell.fillsize();
-						cell.autodock();
-						if(cell.scaled()){
-							cell.bestsize();
-						}
-					}
-				}else if(cell.scaled() &&
-					(cell.height == old_height && cell.width <= old_width ||
-						cell.width == old_width && cell.height <= old_height
-					)
 				){
 					cell.fillsize();
-				}else if(cell.width < old_width && cell.height < old_height && cell.overflow()){
-					cell.fillsize();
-				}else{
-					var a = self.width > cell.width && dy > 0;
-					var b = dy < 0 && (cell.marginTop + cell.height) > self.height;
-					var c = self.height > cell.height && dx > 0;
-					var d = dx < 0 && (cell.marginLeft + cell.width) > self.width;
-					if(cell.width != cell.origin_width && cell.overflow()){
-						if(a || b){
-							var ow = cell.width;
-							cell.scale(rate_h);
-							cell.marginLeft -= intval((cell.width - ow)/2);
-						}
-						if(c || d){
-							cell.scale(rate_w);
-						}
-						if((!a && !b && !c && !d) && !cell.overflow()){
-							if(dy != 0){
-								var ow = cell.width;
-								cell.scale(rate_h);
-								cell.marginLeft -= intval((cell.width - ow)/2);
-							}
-							if(dx != 0){
-								cell.scale(rate_w);
-							}
-						}
-						if(!old[i].overflow && cell.overflow()){
-							//cell.fillsize();
-						}
-						if(!cell.overflow()){
-							cell.center();
-						}
-					}
 				}
 				
-				cell.autocenter();
-				cell.autodock();
-				if(!old[i].scaled && cell.scaled()){
-					cell.width = cell.origin_width;
-					cell.height = cell.origin_height;
-					cell.center();
+				if(old[i].overflow != cell.overflow()){
+					cell.fillsize();
 				}
-				if(!cell.overflow()){
-					cell.center();
+				
+				// 2. do some auto positioning
+				cell.autodock();
+				cell.autocenter();
+				
+				// 3. fix
+				if(!old[i].scaled && cell.scaled()){
+					cell.bestsize();
 				}
 				
 				cell.content.children().css({
@@ -424,6 +368,7 @@ function ToviViewer(){
 						cursor: 'move'
 					});
 				}else{
+					cell.center();
 					cell.content.css({
 						cursor: 'auto'
 					});
@@ -623,12 +568,7 @@ function ToviViewer(){
 			var dx = e.dx;
 			var dy = e.dy;
 			if(Math.abs(dy) > Math.abs(dx)){
-				var delta = dy/120;
-				if(dx == 0){ // mouse scroll
-					self.scale(delta * 0.03);
-				}else{
-					self.scale(delta * 0.08);
-				}
+				self.scale(dy/1000);
 			}else{
 				self.slide(parseInt(dx/3, 10));
 			}
@@ -853,7 +793,7 @@ function ToviViewer(){
 		for(var i=0; i<arguments.length; i++){
 			arr.push(arguments[i]);
 		}
-		d.prepend(arr.join(', ') + '<br/>');
+		d.prepend(arr.join(', ') + '<br/>').show();
 	}
 }
 
