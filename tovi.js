@@ -282,7 +282,11 @@ function ToviViewer(){
 			if(cell.is_image() || cell.type == 'video'){
 				if(dx > 0){
 					if(cell.marginLeft < self.width - (cell.marginLeft + cell.width)){
+						var m = cell.marginLeft;
 						cell.marginLeft += dx;
+						if(m <= 0 && cell.marginLeft > 0){
+							cell.marginLeft = 0;
+						}
 					}else{
 						//
 					}
@@ -295,7 +299,11 @@ function ToviViewer(){
 				}
 				if(dy > 0){
 					if(cell.marginTop < self.height - (cell.marginTop + cell.height)){
+						var m = cell.marginLeft;
 						cell.marginTop += dy;
+						if(m <= 0 && cell.marginTop > 0){
+							cell.marginTop = 0;
+						}
 					}else{
 						//
 					}
@@ -311,11 +319,25 @@ function ToviViewer(){
 				if(cell.height == old_height && cell.width <= old_width ||
 						cell.width == old_width && cell.height <= old_height
 				){
-					cell.fillsize();
-				}
-				
-				if(old[i].overflow != cell.overflow()){
-					cell.fillsize();
+					if(i != self.index && !cell.overflow()){
+						// ignore others if they still fit the window.
+					}else{
+						cell.fillsize();
+					}
+				}else if(old[i].overflow != cell.overflow()){
+					if(i != self.index && !cell.overflow()){
+						// ignore others if they still fit the window.
+					}else{
+						cell.fillsize();
+					}
+				}else if(!old[i].overflow && !cell.overflow()){
+					if(dx > 0 && old[i].scaled){
+						cell.scale(self.width / old_width);
+						if(old[i].scaled && !cell.scaled()){
+							cell.width = cell.origin_width;
+							cell.height = cell.origin_height;
+						}
+					}
 				}
 				
 				// 2. do some auto positioning
@@ -326,11 +348,6 @@ function ToviViewer(){
 				if(!old[i].scaled && cell.scaled()){
 					cell.bestsize();
 				}
-				
-				cell.content.children().css({
-					width: cell.width,
-					height: cell.height
-				});
 			}else{
 				cell.autosize();
 			}
