@@ -167,6 +167,10 @@ function ToviViewer(){
 			this.width = Math.min(self.width, nw);
 			this.height =  Math.min(self.height, nh);
 		}
+		this.actual_size = function(){
+			this.width = this.origin_width;
+			this.height = this.origin_height;
+		}
 	}
 	
 	self.seek = function(index, animation){
@@ -334,20 +338,19 @@ function ToviViewer(){
 					if(i != self.index && !cell.overflow()){
 						// ignore others if they still fit the window.
 					}else{
-						cell.fillsize();
 					}
+						cell.fillsize();
 				}else if(old[i].overflow != cell.overflow()){
 					if(i != self.index && !cell.overflow()){
 						// ignore others if they still fit the window.
 					}else{
-						cell.fillsize();
 					}
+						cell.fillsize();
 				}else if(!old[i].overflow && !cell.overflow()){
 					if(dx > 0 && old[i].scaled){
 						cell.scale(self.width / old_width);
 						if(old[i].scaled && !cell.scaled()){
-							cell.width = cell.origin_width;
-							cell.height = cell.origin_height;
+							cell.actual_size();
 						}
 					}
 				}
@@ -367,7 +370,7 @@ function ToviViewer(){
 		self.layout();
 	}
 	
-	self.layout = function(index){
+	self.layout = function(index, animate){
 		$(dom).width(self.width).height(self.height);
 		var total_width = (self.width + 2 * self.cell_padding) * self.cells.length;
 		$(dom).find('.tovi_row').width(total_width);
@@ -387,7 +390,7 @@ function ToviViewer(){
 		});
 		
 		for(var i=0; i<self.cells.length; i++){
-			if(index != undefined && index != i){
+			if(index >= 0 && index != i){
 				continue;
 			}
 			var cell = self.cells[i];
@@ -402,12 +405,21 @@ function ToviViewer(){
 						cursor: 'auto'
 					});
 				}
-				cell.content.css({
-					width: cell.width,
-					height: cell.height,
-					marginTop: cell.marginTop,
-					marginLeft: cell.marginLeft
-				});
+				if(i == self.index && animate != undefined && animate > 0){
+					cell.content.animate({
+						width: cell.width,
+						height: cell.height,
+						marginTop: cell.marginTop,
+						marginLeft: cell.marginLeft
+					}, animate);
+				}else{
+					cell.content.css({
+						width: cell.width,
+						height: cell.height,
+						marginTop: cell.marginTop,
+						marginLeft: cell.marginLeft
+					});
+				}
 			}else{
 				if(!cell.overflow()){
 					cell.paddingTop = intval((self.height - cell.height - 2*intval(cell.content.css('borderLeftWidth')))/2);
@@ -803,6 +815,62 @@ function ToviViewer(){
 		}
 	}
 	
+	self.bestsize = function(){
+		var cell = self.cells[self.index];
+		cell.bestsize();
+		self.layout();
+	}
+	
+	self.fillsize = function(){
+		var cell = self.cells[self.index];
+		cell.fillsize();
+		self.layout();
+	}
+	
+	self.actual_size = function(){
+		var cell = self.cells[self.index];
+		cell.actual_size();
+		self.layout();
+	}
+	
+	self.flip_h = function(){
+		var cell = self.cells[self.index];
+		if(cell.is_image()){
+			cell.flip_h = cell.flip_h == -1? 1 : -1;
+			cell.content.css('transform', 'scaleX(' + cell.flip_h + ')');
+		}
+		self.layout();
+	}
+	
+	self.flip_v = function(){
+		var cell = self.cells[self.index];
+		if(cell.is_image()){
+			cell.flip_v = cell.flip_v == -1? 1 : -1;
+			cell.content.css('transform', 'scaleY(' + cell.flip_v + ')');
+		}
+		self.layout();
+	}
+	
+	self.rotate_left = function(){
+		var cell = self.cells[self.index];
+		if(cell.is_image()){
+			cell.rotate = cell.rotate || 0;
+			cell.rotate = (cell.rotate - 90) % 360;
+			cell.content.css('transform', 'rotate(' + cell.rotate + 'deg)');
+		}
+		self.layout();
+	}
+	
+	self.rotate_right = function(){
+		var cell = self.cells[self.index];
+		if(cell.is_image()){
+			cell.rotate = cell.rotate || 0;
+			cell.rotate = (cell.rotate + 90) % 360;
+			cell.content.css('transform', 'rotate(' + cell.rotate + 'deg)');
+		}
+		self.layout();
+	}
+
 	function debug(){
 		var d = $('#tovi_debug');
 		if(d.length == 0){
