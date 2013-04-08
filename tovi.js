@@ -239,22 +239,34 @@ function ToviViewer(){
 		self.seek(self.index - 1);
 	}
 	
-	self.scale = function(delta){
+	self.scale = function(delta, event){
 		var cell = self.cells[self.index];
-		// only allow to scale images
+		// only allow to scale images and video
 		if(!cell.is_image() && cell.type != 'video'){
 			return;
 		}
-		cell.midx = cell.width/2 + cell.marginLeft;
-		cell.midy = cell.height/2 + cell.marginTop;
-
-		cell.width = Math.max(20, intval(cell.width * (delta + 1)));
-		cell.height = intval((cell.width/cell.origin_width) * cell.origin_height);
-		cell.autodock();
-		if(cell.overflow()){
-			cell.marginTop = cell.midy - cell.height/2 + cell.paddingTop;
-			cell.marginLeft = cell.midx - cell.width/2 + cell.paddingLeft;
+		// got focus point of the image
+		if(event && event.clientX != undefined && cell.overflow()){
+			var fx = event.clientX - cell.marginLeft;
+			var fy = event.clientY - cell.marginTop;
+		}else{
+			var fx = cell.width/2;
+			var fy = cell.height/2;
 		}
+		
+		var ow = cell.width;
+		var oh = cell.height;
+		cell.width = intval(Math.max(20, cell.width * (delta + 1)));
+		cell.height = intval((cell.width/cell.origin_width) * cell.origin_height);
+		
+		if(cell.overflow()){
+			var dx = cell.width - ow;
+			var dy = cell.height - oh;
+			cell.marginTop = intval(cell.marginTop - dy*(fy/oh));
+			cell.marginLeft = intval(cell.marginLeft - dx*(fx/ow));
+		}
+		
+		cell.autodock();
 		self.layout();
 		self.onscale(self.index, cell);
 	}
@@ -585,7 +597,7 @@ function ToviViewer(){
 			var dx = e.dx;
 			var dy = e.dy;
 			if(Math.abs(dy) > Math.abs(dx)){
-				self.scale(dy/1000);
+				self.scale(dy/1000, e);
 			}else{
 				self.slide(parseInt(dx/3, 10));
 			}
