@@ -243,20 +243,23 @@ function ToviViewer(){
 		self.seek(self.index - 1);
 	}
 	
-	self.scale = function(delta, event){
+	self.scale = function(delta, e){
 		var cell = self.cells[self.index];
 		// only allow to scale images and video
 		if(!cell.is_image() && cell.type != 'video'){
 			return;
 		}
 		// got focus point of the image
-		if(event && event.clientX != undefined && cell.overflow()){
-			var fx = event.clientX - cell.marginLeft - intval($(dom).offset().left);
-			var fy = event.clientY - cell.marginTop - intval($(dom).offset().top);
+		//e.clientX = e.clientX || e.originalEvent.clientX;
+		//e.clientY = e.clientY || e.originalEvent.clientY;
+		if(e && e.clientX != undefined && cell.overflow()){
+			var fx = e.clientX - cell.marginLeft - intval($(dom).offset().left);
+			var fy = e.clientY - cell.marginTop - intval($(dom).offset().top);
 		}else{
 			var fx = cell.width/2;
 			var fy = cell.height/2;
 		}
+		//debug(e.clientX, e.clientY, fx, fy);
 		
 		var ow = cell.width;
 		var oh = cell.height;
