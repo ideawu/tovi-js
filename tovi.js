@@ -122,7 +122,7 @@ function ToviViewer(){
 			}
 		}
 		this.autodock = function(){
-			var thresh = 8;
+			var thresh = 6;
 			if(Math.abs(self.width - this.width) < thresh){
 				var nw = self.width;
 				var nh = intval(this.origin_height * nw/this.origin_width);
@@ -251,8 +251,8 @@ function ToviViewer(){
 		}
 		// got focus point of the image
 		if(event && event.clientX != undefined && cell.overflow()){
-			var fx = event.clientX - cell.marginLeft;
-			var fy = event.clientY - cell.marginTop;
+			var fx = event.clientX - cell.marginLeft - intval($(dom).offset().left);
+			var fy = event.clientY - cell.marginTop - intval($(dom).offset().top);
 		}else{
 			var fx = cell.width/2;
 			var fy = cell.height/2;
