@@ -338,22 +338,17 @@ function ToviViewer(){
 				if(cell.height == old_height && cell.width <= old_width ||
 						cell.width == old_width && cell.height <= old_height
 				){
-					if(i != self.index && !cell.overflow()){
-						// ignore others if they still fit the window.
-					}else{
-					}
-						cell.fillsize();
+					cell.fillsize();
 				}else if(old[i].overflow != cell.overflow()){
-					if(i != self.index && !cell.overflow()){
-						// ignore others if they still fit the window.
-					}else{
-					}
-						cell.fillsize();
+					cell.fillsize();
 				}else if(!old[i].overflow && !cell.overflow()){
-					if(dx > 0 && old[i].scaled){
+					if(old[i].scaled){
+						var ow = cell.width;
+						var oh = cell.height;
 						cell.scale(self.width / old_width);
-						if(old[i].scaled && !cell.scaled()){
-							cell.actual_size();
+						if(!cell.scaled()){
+							cell.width = ow;
+							cell.height = oh;
 						}
 					}
 				}
@@ -669,6 +664,7 @@ function ToviViewer(){
 			padding: 0,
 			border: 0
 		});
+		// TODO: do not render all cells at once, render on demand
 		if(index == 0){
 			$(dom).find('.tovi_row').prepend(cell.dom);
 		}else{

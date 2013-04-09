@@ -48,15 +48,20 @@ var Swipe = function(jqobj){
 	// be called on mousewheel event
 	s.trigger = function(e){
 		var oe = e.originalEvent;
-		// for firefox 
+		// for firefox use originalEvent
 		e.pageX = oe.pageX;
 		e.pageY = oe.pageY;
+		e.clientX = oe.clientX;
+		e.clientY = oe.clientY;
+		//
 		e.dx = oe.wheelDeltaX || 0;
-		e.dy = oe.wheelDeltaY || oe.wheelDelta || -oe.detail * 40;
-		if(e.dx != 0){ // trackpad
-			e.dx *= 3;
-			e.dy *= 3;
+		e.dy =  oe.wheelDelta || oe.wheelDeltaY ||-oe.detail * 40;
+
+		if(oe.wheelDeltaX != undefined){ // trackpad
+			//e.dx *= 1;
+			//e.dy *= 1;
 		}
+
 		s.event = e;
 		if(s.status == null){
 			s.status = 'start';
