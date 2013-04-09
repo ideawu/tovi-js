@@ -11,13 +11,16 @@ function ToviViewer(){
 	self.cell_padding = 100; // actually it is border
 	self.cell_padding_color = '#eee';
 	self.cell_border = '';//'1px solid #00f';
+	// number of cells on either side of current cell
+	// so total number of rendered cells is: offscreen_cells * 2 + 1
+	self.offscreen_cells = 3;
 	
 	self.width = 0;
 	self.height = 0;
 	
 	self.index = 0;
 	self.cells = [];
-	self.in_animation = false;
+	self.in_animation = 0;
 	
 	self.onchange = function(index, cell){}
 	self.onscale = function(index, cell){};
@@ -174,73 +177,82 @@ function ToviViewer(){
 	}
 	
 	self.seek = function(index, animation){
+		if(isNaN(index)){
+			alert(1);
+		}
+		if(self.in_animation >= 1){
+			return;
+		}
 		var animate_speed = (animation==undefined||animation)? 400 : 0;
 		if(index < 0){
 			if(!self.in_animation){
-				self.in_animation = true;
+				self.in_animation ++;
 				$(dom).find('.tovi_row').animate({
 					marginLeft: 0
 				}, animate_speed/2, function(){
-					self.in_animation = false;
+					self.in_animation --;
 					self.seek(0);
 				});
 			}
 			return;
 		}
+		var cell_width = self.cell_padding * 2 + self.width;
 		if(index >= self.cells.length){
 			if(!self.in_animation){
-				self.in_animation = true;
-				var total_width = $(dom).find('.tovi_row').width();
+				self.in_animation ++;
+				var margin = $(dom).find('.tovi_row').width() - self.width;
 				$(dom).find('.tovi_row').animate({
-					marginLeft: -total_width + self.width + 1
+					marginLeft: -margin
 				}, animate_speed/2, function(){
-					self.in_animation = false;
+					self.in_animation --;
 					self.seek(self.cells.length - 1);
 				});
 			}
 			return;
 		}
 		
+		var margin = cell_width * Math.min(self.index, self.offscreen_cells) + self.cell_padding;
+		margin += cell_width * (index - self.index);
+
 		self.onchange(index, self.cells[index]);
 		self.index = index;
-		var cell = self.cells[self.index];
-
-		var lower_x = 0;
-		for(var i=0; i<self.index; i++){
-			lower_x += self.width;
-		}
-		var offset = (self.cell_padding * self.index * 2) + self.width * self.index + self.cell_padding;
-		self.in_animation = true;
+		
+		self.in_animation ++;
 		var row = $(dom).find('.tovi_row');
 		if(animation == 'fade'){
 			row.css({
-				marginLeft: -offset
+				marginLeft: -margin
 			});
 			row.hide().fadeIn(animate_speed, function(){
-				self.in_animation = false;
+				self.in_animation --;
+				self.layout();
 			});
 		}else if(animation == 'slideDown'){
 			row.css({
-				marginLeft: -offset
+				marginLeft: -margin
 			});
 			row.hide().slideDown(animate_speed, function(){
-				self.in_animation = false;
+				self.in_animation --;
+				self.layout();
 			});
 		}else{
 			row.animate({
-				marginLeft: -offset
+				marginLeft: -margin
 			}, animate_speed, function(){
-				self.in_animation = false;
+				self.in_animation --;
+				self.layout();
 			});
 		}
 	}
 	
-	self.next = function(){		
-		self.seek(self.index + 1);
+	self.next = function(step){
+		step = step || 1;		
+		self.seek(self.index + step);
 	}
 	
-	self.prev = function(){
-		self.seek(self.index - 1);
+	self.prev = function(step){
+		step = step || 1;		
+		self.seek(self.index - step);
 	}
 	
 	self.scale = function(delta, e){
@@ -361,37 +373,72 @@ function ToviViewer(){
 				if(!old[i].scaled && cell.scaled()){
 					cell.bestsize();
 				}
-			}else{
-				cell.autosize();
 			}
 		}
 		self.layout();
 	}
 	
 	self.layout = function(index, animate){
-		$(dom).width(self.width).height(self.height);
-		var total_width = (self.width + 2 * self.cell_padding) * self.cells.length;
-		$(dom).find('.tovi_row').width(total_width);
-		if(self.index >= 0){
-			var m = (self.cell_padding * self.index * 2) + self.width * self.index + self.cell_padding;
-			$(dom).find('.tovi_row').css('marginLeft', -m);
-		}
-		$(dom).find('.tovi_cell').css({
-			width: self.width,
-			height: self.height,
-			borderColor: self.cell_padding_color,
-			borderStyle: 'solid',
-			borderWidth: 0,
-			borderBottomWidth: 0,
-			borderLeftWidth: self.cell_padding,
-			borderRightWidth: self.cell_padding
-		});
-		
+		$(dom).find('.tovi_row').html('');
 		for(var i=0; i<self.cells.length; i++){
-			if(index >= 0 && index != i){
+			var cell = self.cells[i];
+			if(i < self.index - self.offscreen_cells || i > self.index + self.offscreen_cells){
 				continue;
 			}
-			var cell = self.cells[i];
+			$(dom).find('.tovi_row').append(cell.dom);
+			
+			// initialize cell
+			if(!cell.title){
+				if(cell.content.attr('title')){
+					cell.title = cell.content.attr('title');
+				}else if(cell.is_image()){
+					if(cell.url.lastIndexOf('/') == -1){
+						cell.title = cell.url;
+					}else{
+						cell.title = cell.url.substr(cell.url.lastIndexOf('/') + 1);
+					}
+				}
+				if(!cell.title){
+					cell.title = '' + (i + 1);
+				}
+				cell.dom.css({
+					overflow: 'hidden',
+					float: 'left',
+					margin: 0,
+					padding: 0
+				});
+				cell.content.css({
+					float: 'left',
+					margin: 0,
+					padding: 0,
+					border: 0
+				});
+				cell.content.attr('title', '');
+			}
+			
+			init_drag(cell);
+			
+			if(cell.is_image() && cell.url.length && !cell.content.attr('src')){
+				cell.content.attr('src', cell.url);
+				cell.content.hide();
+				// the exact way to get image width and height
+				var ni = new Image();
+				ni.index_ = i;
+				ni.onload = function(){
+					var index = this.index_;
+					var cell = self.cells[index];
+					cell.content.show();
+					cell.origin_width = this.width;
+					cell.origin_height = this.height;
+					cell.width = this.width;
+					cell.height = this.height;
+					cell.bestsize();
+					cell.center();
+					self.layout(index);
+				}
+				ni.src = cell.url;
+			}
+			
 			if(cell.is_image() || cell.type == 'video'){
 				if(cell.overflow()){
 					cell.content.css({
@@ -419,34 +466,52 @@ function ToviViewer(){
 					});
 				}
 			}else{
-				if(!cell.overflow()){
-					cell.paddingTop = intval((self.height - cell.height - 2*intval(cell.content.css('borderLeftWidth')))/2);
-					cell.paddingLeft = intval((self.width - cell.width - 2*intval(cell.content.css('borderTopWidth')))/2);
-					cell.content.css({
-						width: self.width - 2*cell.paddingLeft - 2*intval(cell.content.css('borderLeftWidth')),
-						height: self.height - 2*cell.paddingTop - 2*intval(cell.content.css('borderTopWidth')),
-						margin: 0,
-						paddingTop: cell.paddingTop,
-						paddingBottom: cell.paddingTop,
-						paddingLeft: cell.paddingLeft,
-						paddingRight: cell.paddingLeft
-					});
-					if(cell.content[0].scrollHeight > self.height){
-						cell.height = cell.content[0].scrollHeight - 2*intval(cell.content.css('borderTopWidth'));
-					}
-				}else{
-					/*
+				cell.autosize();
+
+				cell.paddingTop = intval((self.height - cell.height - 2*intval(cell.content.css('borderLeftWidth')))/2);
+				cell.paddingLeft = intval((self.width - cell.width - 2*intval(cell.content.css('borderTopWidth')))/2);
+				cell.content.css({
+					width: self.width - 2*cell.paddingLeft - 2*intval(cell.content.css('borderLeftWidth')),
+					height: self.height - 2*cell.paddingTop - 2*intval(cell.content.css('borderTopWidth')),
+					margin: 0,
+					paddingTop: cell.paddingTop,
+					paddingBottom: cell.paddingTop,
+					paddingLeft: cell.paddingLeft,
+					paddingRight: cell.paddingLeft
+				});
+				if(cell.content[0].scrollHeight > self.height){
 					cell.height = cell.content[0].scrollHeight - 2*intval(cell.content.css('borderTopWidth'));
-					cell.content.css({
-						width: cell.width - 2*intval(cell.content.css('borderLeftWidth')),
-						height: cell.height - 2*intval(cell.content.css('borderTopWidth')),
-						margin: 0
-					});
-					*/
 				}
 			}
 		}
-		self.onchange(self.index, self.cells[self.index]);
+		
+		$(dom).find('.tovi_cell').css({
+			width: self.width,
+			height: self.height,
+			borderColor: self.cell_padding_color,
+			borderStyle: 'solid',
+			borderWidth: 0,
+			borderBottomWidth: 0,
+			borderLeftWidth: self.cell_padding,
+			borderRightWidth: self.cell_padding
+		});
+		
+		$(dom).width(self.width).height(self.height);
+		
+		var cell_width = self.cell_padding * 2 + self.width;
+		if(self.index < self.offscreen_cells){
+			var margin = cell_width * self.index + self.cell_padding;
+		}else{
+			var margin = cell_width * self.offscreen_cells + self.cell_padding;
+		}
+		var total_width = cell_width * $(dom).find('.tovi_cell').length;
+		$(dom).find('.tovi_row').css({
+			marginLeft: -margin,
+			width: total_width
+		});
+		if(self.cells.length > 0){
+			self.onchange(self.index, self.cells[self.index]);
+		}
 	}
 	
 	self.move = function(dx, dy){
@@ -479,24 +544,6 @@ function ToviViewer(){
 		}else{
 			$(dom).find('.tovi_row').css('marginLeft', margin);
 		}
-		
-		var lower_x = (self.width + 2 * self.cell_padding) * self.index + self.cell_padding;
-		var upper_x = lower_x + self.width;
-		margin = Math.abs(margin);
-
-		if(delta > 0){ // right
-			if(lower_x - margin > self.width * self.flip_thresh){
-				self.index -= 1;
-				self.onchange(self.index, self.cells[self.index]);
-			}
-		}else{
-			if(margin - lower_x > self.width * self.flip_thresh){
-				self.index += 1;
-				self.onchange(self.index, self.cells[self.index]);
-			}
-		}
-		self.index = Math.max(self.index, 0);
-		self.index = Math.min(self.index, self.cells.length - 1);
 	}
 
 	function move(e){
@@ -512,6 +559,71 @@ function ToviViewer(){
 		self.move(x - last_pos.x, y - last_pos.y);
 		last_pos.x = x;
 		last_pos.y = y;
+	}
+	
+	function move_end(){
+		var thresh = self.width * self.flip_thresh;
+		var cell_width = self.cell_padding * 2 + self.width;
+		if(self.index < self.offscreen_cells){
+			var last_margin = cell_width * self.index + self.cell_padding;
+		}else{
+			var last_margin = cell_width * self.offscreen_cells + self.cell_padding;
+		}
+		var curr_margin = Math.abs(intval($(dom).find('.tovi_row').css('marginLeft')));
+		var delta = curr_margin - last_margin;
+		var skip = intval(Math.abs(delta) / cell_width);
+		if(intval(Math.abs(delta) % cell_width) > thresh){
+			skip += 1;
+		}
+		if(skip > self.offscreen_cells){
+			skip = self.offscreen_cells;
+		}
+		if(skip > 0 && delta > 0){
+			debug((self.index + 1) + ' + ' + skip, 'curr=' + curr_margin, 'last=' + last_margin);
+			self.seek(self.index + skip);
+		}else if(skip > 0 && delta < 0){
+			debug((self.index + 1) + ' - ' + skip, 'curr=' + curr_margin, 'last=' + last_margin);
+			self.seek(self.index - skip);
+		}else{
+			self.seek(self.index);
+		}
+	}
+
+	function init_drag(cell){
+		$(dom).on('dragstart', function(e){e.preventDefault();});
+		cell.dom.bind('mousedown', function(e){
+			$(dom).bind('mousemove', move);
+			$(dom).bind('mouseup mouseout', function(e){
+				if(e.type == 'mouseout'){
+					var offset = $(dom).offset();
+					if(e.pageX > offset.left && e.pageX < offset.left + $(dom).width()
+						&& e.pageY > offset.top && e.pageY < offset.top + $(dom).height()){
+						return;
+					}
+				}
+				last_pos = {x: 0, y: 0};
+				$(dom).unbind('mousemove', move);
+				$(dom).unbind('mouseup mouseout');
+				move_end();
+			});
+		});
+	}
+	
+	function init_swipe(){
+		var swipe = new Swipe($(dom));
+		swipe.onswipe = function(e){
+			e.preventDefault();
+			var dx = e.dx;
+			var dy = e.dy;
+			if(Math.abs(dy) > Math.abs(dx)){
+				self.scale(dy/1000, e);
+			}else{
+				self.slide(parseInt(dx/3, 10));
+			}
+		}
+		swipe.onend = function(e){
+			move_end();
+		}
 	}
 
 	function init_nav_button(){
@@ -579,43 +691,6 @@ function ToviViewer(){
 			}
 		});
 	}
-
-	function init_drag(cell){
-		$(dom).on('dragstart', function(e){e.preventDefault();});
-		cell.dom.bind('mousedown', function(e){
-			$(dom).bind('mousemove', move);
-			$(dom).bind('mouseup mouseout', function(e){
-				var offset = $(dom).offset();
-				if(e.type == 'mouseout'){
-					if(e.pageX > offset.left && e.pageX < offset.left + $(dom).width()
-						&& e.pageY > offset.top && e.pageY < offset.top + $(dom).height()){
-						return;
-					}
-				}
-				$(dom).unbind('mousemove', move);
-				$(dom).unbind('mouseup mouseout');
-				self.seek(self.index);
-				last_pos = {x: 0, y: 0};
-			});
-		});
-	}
-	
-	function init_swipe(){
-		var swipe = new Swipe($(dom));
-		swipe.onswipe = function(e){
-			e.preventDefault();
-			var dx = e.dx;
-			var dy = e.dy;
-			if(Math.abs(dy) > Math.abs(dx)){
-				self.scale(dy/1000, e);
-			}else{
-				self.slide(parseInt(dx/3, 10));
-			}
-		}
-		swipe.onend = function(e){
-			self.seek(self.index);
-		}
-	}
 	
 	self.clear = function(){
 		self.cells = [];
@@ -631,68 +706,17 @@ function ToviViewer(){
 	self.insert = function(index, e){
 		index = Math.min(self.cells.length, Math.max(0, index));
 		var cell = new Cell(self.width, self.height);
-		var str = '<div class="tovi_cell"></div>';
-		cell.dom = $(str);
+		cell.dom = $('<div class="tovi_cell"></div>');
 		cell.content = $(e);
 		cell.type = cell.content[0].tagName.toLowerCase();
 		cell.dom.html(cell.content);
 		self.cells.splice(index, 0, cell);
 		
-		if(cell.content.attr('title')){
-			cell.title = cell.content.attr('title');
-		}else if(cell.is_image()){
-			var url = cell.content.attr('src');
-			if(url.lastIndexOf('/') == -1){
-				cell.title = url;
-			}else{
-				cell.title = url.substr(url.lastIndexOf('/') + 1);
-			}
-		}else{
-			cell.title = '' + (index + 1);
-		}
-		cell.content.attr('title', '');
-		
-		$(cell.dom).css({
-			overflow: 'hidden',
-			float: 'left',
-			margin: 0,
-			padding: 0
-		});
-		cell.content.css({
-			float: 'left',
-			margin: 0,
-			padding: 0,
-			border: 0
-		});
-		// TODO: do not render all cells at once, render on demand
-		if(index == 0){
-			$(dom).find('.tovi_row').prepend(cell.dom);
-		}else{
-			$($(dom).find('.tovi_cell')[index-1]).after(cell.dom);
-		}
-		
 		if(cell.is_image()){
-			var url = $(e).attr('src');
-			$(e).hide();
-			cell.url = url;
-			// the exact way to get image width and height
-			var ni = new Image();
-			ni.index_ = index;
-			ni.onload = function(){
-				var cell = self.cells[this.index_];
-				cell.origin_width = this.width;
-				cell.origin_height = this.height;
-				cell.width = this.width;
-				cell.height = this.height;
-				cell.bestsize();
-				cell.center();
-				cell.content.css({
-					width: cell.width,
-					height: cell.height
-				}).fadeIn('fast');
-				self.layout(this.index_);
-			}
-			ni.src = url;
+			// the caller replace src attribute with tovi_src, to achieve lazy load of the image
+			cell.url = cell.content.attr('tovi_src') || cell.content.attr('src');
+			cell.content.removeAttr('tovi_src');
+			cell.content.removeAttr('src');
 		}else if(cell.type == 'video'){
 			var url = $(e).attr('src');
 			if(!url || url.length == 0){
@@ -712,16 +736,11 @@ function ToviViewer(){
 					width: cell.width,
 					height: cell.height
 				}).fadeIn('fast');
-				self.layout(index);
+				if(index == self.index){
+					self.layout(index);
+				}
 		    });
-		}else{
-			cell.autosize();
 		}
-		init_drag(cell);
-		if(index == self.index){
-			self.layout();
-		}
-		self.onchange(self.index, self.cells[self.index]);
 	}
 
 	self.init = function(dom_or_id, width, height){
@@ -764,7 +783,6 @@ function ToviViewer(){
 				width: cell.width,
 				height: cell.height
 			});
-			//self.onchange(self.index, self.cells[self.index]);
 		}
 		init_nav_button();
 		init_swipe();
@@ -817,6 +835,7 @@ function ToviViewer(){
 	self.bestsize = function(){
 		var cell = self.cells[self.index];
 		cell.bestsize();
+		cell.center();
 		self.layout();
 	}
 	
@@ -829,6 +848,7 @@ function ToviViewer(){
 	self.actual_size = function(){
 		var cell = self.cells[self.index];
 		cell.actual_size();
+		cell.center();
 		self.layout();
 	}
 	
@@ -871,25 +891,11 @@ function ToviViewer(){
 	}
 
 	function debug(){
-		var d = $('#tovi_debug');
-		if(d.length == 0){
-			d = $('<div id="tovi_debug"></div>');
-			d.css({
-				margin: '0 auto',
-				color: '#333',
-				width: 300,
-				height: 150,
-				overflow: 'auto',
-				textAlign: 'center',
-				background: '#fff'
-			});
-			$(dom).after(d);
-		}
 		var arr = [];
 		for(var i=0; i<arguments.length; i++){
 			arr.push(arguments[i]);
 		}
-		d.prepend(arr.join(', ') + '<br/>').show();
+		console.log(arr.join(', '));
 	}
 }
 
