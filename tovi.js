@@ -8,6 +8,7 @@ function ToviViewer(){
 	var dom = null;
 	var last_pos = {x: 0, y: 0};
 	self.flip_thresh = 3/10;
+	// TODO: use div to build cell padding
 	self.cell_padding = 100; // actually it is border
 	self.cell_padding_color = '#eee';
 	self.cell_border = '';//'1px solid #00f';
@@ -379,7 +380,8 @@ function ToviViewer(){
 	}
 	
 	self.layout = function(index, animate){
-		$(dom).find('.tovi_row').html('');
+		$(dom).find('.tovi_row').empty();
+		
 		for(var i=0; i<self.cells.length; i++){
 			var cell = self.cells[i];
 			if(i < self.index - self.offscreen_cells || i > self.index + self.offscreen_cells){
@@ -405,7 +407,7 @@ function ToviViewer(){
 					overflow: 'hidden',
 					float: 'left',
 					margin: 0,
-					padding: 0
+					padding: 0,
 				});
 				cell.content.css({
 					float: 'left',
@@ -644,7 +646,7 @@ function ToviViewer(){
 		var h = w;
 		$(dom).find('.tovi_prev, .tovi_next').css({
 			position: 'absolute',
-			color: '#666',
+			color: '#999',
 			fontWeight: 'bold',
 			background: '#000',
 			opacity: opacity,
@@ -653,7 +655,7 @@ function ToviViewer(){
 			'font-size': w,
 			'border-radius': 8,
 			'text-align': 'center',
-			border: '1px solid #999',
+			border: '1px solid #fff',
 			padding: 2,
 			width: w,
 			lineHeight: w + 'px',
@@ -760,6 +762,7 @@ function ToviViewer(){
 		self.cells = [];
 		
 		var html = '';
+		// must be relative positioning, to make children positioning right
 		html += '<div class="tovi" style="position: relative">';
 		html += '<div class="tovi_row"></div>';
 		html += '<div class="tovi_prev" style="display: none;">&lt;</div>';
@@ -771,8 +774,12 @@ function ToviViewer(){
 			cursor: 'default',
 			overflow: 'hidden',
 			visibility: 'visible',
-			padding: 0
+			textAlign: 'center',
+			padding: 0,
+			userSelect: 'none'
 		}).show();
+		$(dom).on('selectstart', function(e){e.preventDefault();});
+
 		$(dom).find('.tovi_row').css({
 			position: 'relative',
 			marginLeft: -self.cell_padding
