@@ -13,8 +13,8 @@
 	body{
 		margin: 0;
 		padding: 0;
-		color: #ccc;
-		font-size: 13px;
+		color: #ddd;
+		font-size: 14px;
 		font-family: arial;
 		background: #333;
 		text-align: center;
@@ -29,7 +29,7 @@
 	}
 	h1{
 		margin: 8px 0;
-		font-size: 150%;
+		font-size: 180%;
 	}
 	h2{
 		margin: 8px 0;
@@ -41,12 +41,12 @@
 		overflow: hidden;
 		color: #444;
 		margin: 10px auto;
-		width: 580px;
-		height: 400px;
+		width: 640px;
+		height: 420px;
 		background: #fff;
 	}
 	#player p{
-		margin: 12px 0;
+		margin: 10px 0;
 		padding: 0;
 	}
 	table{
@@ -55,10 +55,10 @@
 	#instruction{
 		width: 400px;
 		text-align: left;
-		background: 
+		font-size: 14px;
 	}
 	#instruction table td{
-		padding: 4px;
+		padding: 2px;
 	}
 	#instruction h3{
 		margin-left: 0px;
@@ -124,16 +124,43 @@
 
 <div id="player" style="display: auto;">
 	<div>
-		<div style="">
-			<h1 style="margin: 0 0 25px 0;">Instruction</h1>
-			<p>Use mouse to drag left or right, or use trackpad to swipe.</p>
-			<p>Use scroll wheel to scale images.</p>
-			<p>Use arrow keys to paginate.</p>
-			<p style="margin-top: 00px; font-size: 80%">
-				@ideawu
-				<br/>
-				<a href="http://tovi.ideawu.com/">http://tovi.ideawu.com/</a>
-			</p>
+		<h1 style="margin: 0 0 25px 0;">Instruction</h1>
+		<div id="instruction">
+			<h3>Mouse and Trackpad Operation</h3>
+			<table>
+				<tr>
+					<td><label>Trackpad Swipe<br/>Mouse Drag and Drop</label></td>
+					<td>Play next/previous, move image</td>
+				</tr>
+				<tr>
+					<td><label>Trackpad Scroll<br/>Scroll Wheel</label></td>
+					<td>Scale image</td>
+				</tr>
+			</table>
+			<h3>Keyboard Shortcuts</h3>
+			<table>
+				<tr>
+					<td><label>Q/Esc</label></td>
+					<td>Close window</td>
+				</tr>
+				<tr>
+					<td><label>F</label></td>
+					<td>Toggle zoom window</td>
+				</tr>
+				<tr>
+					<td><label>&larr; &rarr;</label></td>
+					<td>Previous/Next</td>
+				</tr>
+				<tr>
+					<td><label>SHIFT + &larr; &rarr;</label></td>
+					<td>Rotate Left/Right</td>
+				</tr>
+				<tr>
+					<td><label>&uarr; &nbsp; &darr;</label></td>
+					<td>Scale up/Scale down</td>
+				</tr>
+			</table>
+			<div>Drag and drop file(s) and folder(s) to open</div>
 		</div>
 	</div>
 	<img src="http://images.apple.com/mac/home/images/promo_lead_macbookpro.jpg" />
