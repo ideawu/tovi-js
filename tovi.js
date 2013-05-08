@@ -9,8 +9,8 @@ function ToviViewer(){
 	var last_pos = {x: 0, y: 0};
 	self.flip_thresh = 3/10;
 	// TODO: use div to build cell padding
-	self.cell_padding = 100; // actually it is border
-	self.cell_padding_color = '#eee';
+	self.cell_padding = 30; // actually it is border
+	self.cell_padding_color = '#fff';
 	self.cell_border = '';//'1px solid #00f';
 	// number of cells on either side of current cell
 	// so total number of rendered cells is: offscreen_cells * 2 + 1
@@ -384,6 +384,7 @@ function ToviViewer(){
 		
 		for(var i=0; i<self.cells.length; i++){
 			var cell = self.cells[i];
+			cell.content.show();
 			if(i < self.index - self.offscreen_cells || i > self.index + self.offscreen_cells){
 				continue;
 			}
@@ -661,6 +662,7 @@ function ToviViewer(){
 			lineHeight: w + 'px',
 			height: w
 		});
+		
 		$(dom).bind('mousemove mouseleave', function(e){
 			var x = e.pageX - $(dom).offset().left;
 			var y = e.pageY - $(dom).offset().top;

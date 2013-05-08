@@ -1,197 +1,141 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html>
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<title>Tovi - Total Image Viewer for Mac OS X. GIF JPG PNG SVG TIFF...</title>
 	<meta name="Description" content="Tovi is a image viewer/slideshow form Mac OS X, supporting gif, jpe, png, svg, and other formats" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
 
-	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-	<script type="text/javascript" src="swipe.js"></script>
-	<script type="text/javascript" src="tovi.js"></script>
-	
-	<style type="text/css">
-	body{
+    <style type="text/css">
+	.tovi_cell{
+		color: #555;
+		background: #f6f6f6;
+	}
+	body {
+		padding-top: 10px;
+		padding-bottom: 20px;
+	}
+	.container{
+		width: 820px;
+	}
+	.muted{
 		margin: 0;
 		padding: 0;
-		color: #ddd;
-		font-size: 14px;
-		font-family: arial;
-		background: #333;
+		color: #666;
+	}
+	ul.nav{
+		margin: 0;
+		padding: 12px 0;
+	}
+	.footer{
 		text-align: center;
 	}
-	a{
-		cursor: pointer;
-		color: #ff3;
-		text-decoration: none;
+	.slideshow {
+		margin: 60px 0;
+		text-align: center;
 	}
-	a img{
-		text-decoration: none;
-	}
-	h1{
-		margin: 8px 0;
-		font-size: 180%;
-	}
-	h2{
-		margin: 8px 0;
-		font-size: 130%;
-	}
-	#player{
-		font-size: 18px;
-		visibility: hidden;
-		overflow: hidden;
-		color: #444;
-		margin: 10px auto;
-		width: 640px;
-		height: 420px;
-		background: #fff;
-	}
-	#player p{
-		margin: 10px 0;
-		padding: 0;
-	}
-	table{
-		border-collapse: collapse;
-	}
-	#instruction{
-		width: 400px;
-		text-align: left;
-		font-size: 14px;
-	}
-	#instruction table td{
-		padding: 2px;
-	}
-	#instruction h3{
-		margin-left: 0px;
-	}
-	#instruction label{
-		margin-left: 0px;
-		padding-left: 0px;
-		padding-right: 20px;
-		float: left;
-		width: 180px;
+	label{
 		text-align: right;
+		margin-right: 8px;
 	}
-	#nav{
-		overflow: hidden;
-		margin: 0;
-		padding: 4px 0;
-		background: #333;
-	}
-	#nav .btn{
-		cursor: pointer;
-		width: 22px;
-		height: 22px;
-		margin: 0 3px;
-		float: left;
-		overflow: hidden;
-		background-repeat: no-repeat;
-		background-position: 2px 2px;
-	}
-	#nav .btn_hover{
-		background-color: #555;
-	}
-	#nav_page{
-		cursor: default;
-		float: left;
-		margin: 2px 10px 0 10px;
-		padding: 0;
-		font-size: 16px;
-		height: 22px;
-		color: #ff3;
-		text-align: center;
-		vertical-align: middle;
-	}
-	#nav_buttons{
-		margin: 0 auto;
+	td{
+		padding: 4px;
 	}
 	</style>
-	<link id="theme_link" href="themes/default/style.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
-
-<img src="images/icon_32x32@2x.png" />
-
-<h1>Tovi</h1>
-<h2>Total Image Viewer for Mac OS X. GIF JPG PNG SVG TIFF...</h2>
-
-<p>
-<a href="https://itunes.apple.com/us/app/tovi/id638255416?mt=12&uo=4">
-	<img height="40" src="http://linkmaker.itunes.apple.com/htmlResources/assets/images/web/linkmaker/badge_macappstore-lrg.svg" />
-</a>
-</p>
-
-<h3>
-<a href="http://www.ideawu.com/blog/2013/05/tovi-faq.html">Tovi.app FAQs</a>
-</h3>
-
-
-<div id="player" style="display: auto;">
-	<div>
-		<h1 style="margin: 0 0 25px 0;">Instruction</h1>
-		<div id="instruction">
-			<h3>Mouse and Trackpad Operation</h3>
-			<table>
-				<tr>
-					<td><label>Trackpad Swipe<br/>Mouse Drag and Drop</label></td>
-					<td>Play next/previous, move image</td>
-				</tr>
-				<tr>
-					<td><label>Trackpad Scroll<br/>Scroll Wheel</label></td>
-					<td>Scale image</td>
-				</tr>
-			</table>
-			<h3>Keyboard Shortcuts</h3>
-			<table>
-				<tr>
-					<td><label>Q/Esc</label></td>
-					<td>Close window</td>
-				</tr>
-				<tr>
-					<td><label>F</label></td>
-					<td>Toggle zoom window</td>
-				</tr>
-				<tr>
-					<td><label>&larr; &rarr;</label></td>
-					<td>Previous/Next</td>
-				</tr>
-				<tr>
-					<td><label>SHIFT + &larr; &rarr;</label></td>
-					<td>Rotate Left/Right</td>
-				</tr>
-				<tr>
-					<td><label>&uarr; &nbsp; &darr;</label></td>
-					<td>Scale up/Scale down</td>
-				</tr>
-			</table>
-			<div>Drag and drop file(s) and folder(s) to open</div>
-		</div>
-	</div>
 	
-	<img src="http://www.ideawu.com/tovi/Tovi.png" />
-	<img src="http://images.apple.com/mac/home/images/promo_lead_macbookpro.jpg" />
-	<img src="http://www.ideawu.net/blog/wp-content/themes/ideablog-2.0/logofish.gif" />
-	<img src="http://www.ideawu.net/image/udpwork.com.gif" />
+<div class="container">
+
+<div class="masthead">
+	<ul class="nav nav-pills pull-right">
+		<li class="active"><a href="/">Home</a></li>
+		<li><a href="https://itunes.apple.com/us/app/tovi/id638255416?mt=12&uo=4">Download</a></li>
+		<li><a href="http://www.ideawu.com/blog/2013/05/tovi-faq.html">Faq</a></li>
+	</ul>
+	<h3 class="muted"><img src="images/icon_32x32@2x.png" /> Tovi Image Viewer</h3>
+</div>
+
+<hr style="margin-top: 4px;">
+
+<div class="slideshow">
 	<div>
-		<h1 style="margin-top: 0px;">Thanks!</h1>
+		<h1>Total Image Viewer for Mac OSX!</h1>
+		<p class="lead">Tovi is the image viewer for Mac OSX, to replace Preview for viewing images. Tovi can auto discover other images to generate slideshows when you open image from Finder.</p>
+		<p>
+		<a href="https://itunes.apple.com/us/app/tovi/id638255416?mt=12&uo=4">
+			<img width="240" src="http://linkmaker.itunes.apple.com/htmlResources/assets/images/web/linkmaker/badge_macappstore-lrg.svg" />
+		</a>
+		</p>
+	</div>
+	<img src="http://www.ideawu.com/tovi/Tovi.png" />
+	<div style="display: none; text-align: left;">
+		<h3 style="margin: 0 0 20px 0; text-align: center;">Instruction</h3>
+		<table width="500">
+			<tr>
+				<td width="50%"><label>Trackpad Swipe, Drag and Drop</label></td>
+				<td>Play next/previous, move image</td>
+			</tr>
+			<tr>
+				<td><label>Mouse Wheel</label></td>
+				<td>Scale image</td>
+			</tr>
+			<tr>
+				<td width="50%"><label>&larr; &rarr;</label></td>
+				<td>Previous/Next</td>
+			</tr>
+			<tr>
+				<td><label>SHIFT + &larr; &rarr;</label></td>
+				<td>Rotate Left/Right</td>
+			</tr>
+			<tr>
+				<td><label>&uarr; &nbsp; &darr;</label></td>
+				<td>Scale up/Scale down</td>
+			</tr>
+		</table>
 	</div>
 </div>
 
-<div id="nav">
-	<a href="javascript: tovi.prev();">&lt;&lt;</a>
-	&nbsp;
-	<span id="page"></span>
-	&nbsp;
-	<a href="javascript: tovi.next();">&gt;&gt;</a>
-	<p><label><input type="checkbox" name="autoplay" />Auto Play</label></p>
+<hr>
+
+<div class="row-fluid">
+	<div class="span6">
+		<h4>Supported Image Types</h4>
+		<p> GIF JPG PNG SVG TIFF, and more...</p>
+		
+		<h4>GIF Animation Play</h4>
+		<p>GIF animation playing is supported, also, GIFs are scalable, rotatable and flipable.</p>
+	</div>
+
+	<div class="span6">
+		<h4>Auto Slideshows</h4>
+		<p>When you open one image from Finder, Tovi will auto discover images in the same folder, then you can navigate through these image by arrow keys.</p>
+
+		<h4>Easy Operation</h4>
+		<p>Simple keyboard shortcuts: <code>&larr; &rarr; &uarr; &darr;</code>, for zoom, rotate, etc.</p>
+	</div>
 </div>
 
-<div>
-	<textarea style="width:450px;height:100px" name="text">http://images.apple.com/iphone/design/images/hero_front.jpg</textarea>
-	<p>
-	<button id="add">Insert HTML or image Link into slider</button>
-	</p>
+<hr>
+
+<div class="footer">
+	Copyright &copy; 2013 <a href="http://www.ideawu.com/">ideawu.com</a>. All rights reserved.
+	<div style="display: none;">
+	<script type="text/javascript">
+	<!--
+	document.write(unescape("| %3Cscript src='http://js.users.51.la/414722.js' type='text/javascript'%3E%3C/script%3E"));
+	//-->
+	</script>
+	</div>
 </div>
 
+</div> <!-- /container -->
+	
+	<script src="jquery-1.9.1.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="swipe.js"></script>
+	<script type="text/javascript" src="tovi.js"></script>
 
 <script type="text/javascript">
 var tovi;
@@ -201,32 +145,20 @@ $(function(){
 	});
 	$(document).ready(function(){
 		$('*').on('selectstart', function(e){e.preventDefault();});
+		$('.slideshow').css({
+			margin: 0,
+			padding: 0,
+			height: 260,
+			border: '1px solid #eee'
+		});
 
 		tovi = new ToviViewer();
 		tovi.onchange = function(index, cell){
 			//alert(index);
 			$('#page').html((index + 1) + '/' + tovi.cells.length);
 		}
-		tovi.init($('#player'));
-		
-		$('#add').click(function(){
-			var str = $('textarea[name=text]').val();
-			if(str.match(/^https?:\/\//)){
-				str = '<img src="' + str + '" />';
-			}else{
-				str = '<div>' + str + '</div>';
-			}
-			tovi.insert(0, str);
-			tovi.seek(-1);
-		});
-		
-		$('input[name=autoplay]').change(function(){
-			if(this.checked){
-				tovi.autoplay();
-			}else{
-				tovi.stopAutoplay();
-			}
-		});
+		tovi.init($('.slideshow'));
+		tovi.autoplay(4000);
 	});
 	$(document).bind('keydown', keyboard_handler);
 });
@@ -258,19 +190,5 @@ function keyboard_handler(e){
 }
 </script>
 
-
-<div style="font-size: 12px; margin-top: 50px; text-align: center;">
-Copyright &copy; 2013 <a href="http://www.ideawu.com/">ideawu.com</a>. All rights reserved.
-<div style="display: none;">
-<script type="text/javascript">
-<!--
-document.write(unescape("| %3Cscript src='http://js.users.51.la/414722.js' type='text/javascript'%3E%3C/script%3E"));
-//-->
-</script>
-</div>
-</div>
-
 </body>
 </html>
-
-
